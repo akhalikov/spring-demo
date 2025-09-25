@@ -3,6 +3,8 @@ package io.spring.demo.customer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 public class CustomerService {
 
@@ -10,6 +12,10 @@ public class CustomerService {
 
     public CustomerService(CustomerRepository customerRepository) {
         this.customerRepository = customerRepository;
+    }
+
+    public Optional<Customer> findCustomerById(Long id) {
+        return customerRepository.findById(id);
     }
 
     @Transactional

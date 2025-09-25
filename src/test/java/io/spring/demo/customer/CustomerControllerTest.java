@@ -1,6 +1,7 @@
 package io.spring.demo.customer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -13,6 +14,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -27,6 +29,9 @@ class CustomerControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private CustomerRepository repository;
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16")
@@ -56,5 +61,35 @@ class CustomerControllerTest {
             .andExpect(jsonPath("$.id").exists())
             .andExpect(jsonPath("$.name").value("Alice"))
             .andExpect(jsonPath("$.email").value("alice@example.com"));
+    }
+
+    @Test
+    void returns_customer_by_id() throws Exception {
+        // given
+        var customer = new Customer();
+        customer.setName("Bob");
+        customer.setEmail("bob@example.com");
+        var saved = repository.saveAndFlush(customer);
+
+        // when / then
+        mvc.perform(get("/customers/{id}", saved.getId())
+                .contentType(APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(saved.getId()))
+            .andExpect(jsonPath("$.name").value("Bob"))
+            .andExpect(jsonPath("$.email").value("bob@example.com"));
+    }
+
+    @Test
+    void returns_404_when_customer_is_not_present() throws Exception {
+        // given
+        var nonExistentId  = RandomUtils.secure().randomLong();
+
+        // when / then
+        mvc.perform(get("/customers/{id}", nonExistentId)
+                .contentType(APPLICATION_JSON))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.error")
+                .value("Could not find customer with id=%s".formatted(nonExistentId)));
     }
 }
