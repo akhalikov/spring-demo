@@ -1,1 +1,9 @@
+dependencyResolutionManagement {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+    }
+}
+
 rootProject.name = 'spring-demo'
+include 'demo-jpa'
