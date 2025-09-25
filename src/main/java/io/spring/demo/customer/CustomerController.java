@@ -5,6 +5,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import static io.spring.demo.util.Checks.isValidEmail;
+import static io.spring.demo.util.Checks.validate;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
 @RestController
 @RequestMapping("/customers")
 public class CustomerController {
@@ -25,6 +29,9 @@ public class CustomerController {
 
     @PostMapping
     public ResponseEntity<Customer> createCustomer(@RequestBody CustomerDto customerDto) {
+        validate(isNotBlank(customerDto.name()), "name must not be empty");
+        validate(isNotBlank(customerDto.email()), "email must not be empty");
+        validate(isValidEmail(customerDto.email()), "email is invalid");
         return ResponseEntity
             .ok()
             .body(customerService.createCustomer(customerDto));

@@ -13,6 +13,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.Map;
+
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -49,19 +51,71 @@ class CustomerControllerTest {
     @Test
     public void creates_customer() throws Exception {
         // given
-        var customer = new Customer();
-        customer.setName("Alice");
-        customer.setEmail("alice@example.com");
+        var payload = Map.of(
+            "name", "Alice",
+            "email", "alice@example.com"
+        );
 
         // when / then
         mvc.perform(post("/customers")
                 .contentType(APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(customer)))
+                .content(objectMapper.writeValueAsString(payload)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").exists())
             .andExpect(jsonPath("$.name").value("Alice"))
             .andExpect(jsonPath("$.email").value("alice@example.com"));
     }
+
+    @Test
+    void returns_400_when_email_is_invalid() throws Exception {
+        // given
+        var payload = Map.of(
+            "name", "Bob",
+            "email", "not-an-email"
+        );
+
+        // when / then
+        mvc.perform(post("/customers")
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(payload)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value("email is invalid"));
+    }
+
+    @Test
+    void returns_400_when_email_is_missing() throws Exception {
+        // given
+        var payload = Map.of(
+            "name", "Charlie"
+        );
+
+        // when / then
+        mvc.perform(post("/customers")
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(payload)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error")
+                .value("email must not be empty"));
+    }
+
+
+    @Test
+    void returns_400_when_name_is_blank() throws Exception {
+        // given
+        var payload = Map.of(
+            "name", "   ",
+            "email", "bob@example.com"
+        );
+
+        // when / then
+        mvc.perform(post("/customers")
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(payload)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error")
+                .value("name must not be empty"));
+    }
+
 
     @Test
     void returns_customer_by_id() throws Exception {

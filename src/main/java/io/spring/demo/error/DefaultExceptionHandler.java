@@ -11,6 +11,7 @@ import java.util.Map;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.ResponseEntity.status;
 
 @ControllerAdvice
 public class DefaultExceptionHandler {
@@ -19,13 +20,20 @@ public class DefaultExceptionHandler {
     public ResponseEntity<Map<String, String>> handleEntityNotFound(EntityNotFoundException ex) {
         Map<String, String> body = new HashMap<>();
         body.put("error", ex.getMessage());
-        return ResponseEntity.status(NOT_FOUND).body(body);
+        return status(NOT_FOUND).body(body);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
         Map<String, String> body = new HashMap<>();
         body.put("error", ex.getMessage());
-        return ResponseEntity.status(BAD_REQUEST).body(body);
+        return status(BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<Map<String, String>> handleValidationException(ValidationException ex) {
+        Map<String, String> body = new HashMap<>();
+        body.put("error", ex.getMessage());
+        return status(BAD_REQUEST).body(body);
     }
 }
